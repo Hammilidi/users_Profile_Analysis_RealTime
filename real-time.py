@@ -7,16 +7,17 @@ from confluent_kafka import Producer
 producer = Producer({'bootstrap.servers': 'kafka1:19092'})
 
 # Récupérer les données depuis randomuser.me
-url = "https://randomuser.me/api/?results=5000"
+url = "https://randomuser.me/api/?results=2"
 response = requests.get(url)
 data = response.json()
+print(data['results'][0])
 
-# Sérialiser en JSON
-json_data = json.dumps(data).encode('utf-8')
+# # Sérialiser en JSON
+# json_data = json.dumps(data).encode('utf-8')
 
-# Compresser les données JSON
-compressed_data = gzip.compress(json_data)
+# # Compresser les données JSON
+# compressed_data = gzip.compress(json_data)
 
-# Envoyer les données compressées au sujet Kafka
-producer.produce('randomuser_data_topic', key=None, value=compressed_data)
-producer.flush()
+# # Envoyer les données compressées au sujet Kafka
+# producer.produce('randomuser_data_topic', key=None, value=compressed_data)
+# producer.flush()
