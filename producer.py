@@ -1,57 +1,45 @@
-import time
-from kafka import KafkaProducer
-from kafka.errors import NoBrokersAvailable
+from confluent_kafka import Producer, KafkaError
 import requests
 import json
-import logging
-import sys
 
-# Set up logging
-logging.basicConfig(level=logging.ERROR)
-
-# Define the topic name
-TOPIC_NAME = 'user_profiles'
-# Define server name
+# Définir le nom du serveur Kafka
 SERVER_NAME = 'localhost:9092'
+# Définir le nom du Topic
+TOPIC_NAME = 'users_profiles'
 
-# Initialize the Kafka producer
+# Configuration du producteur Kafka
+config = {'bootstrap.servers': SERVER_NAME}
+
+producer = Producer(config)
+
+def delivery_report(err, msg):
+    if err is not None:
+        print('Erreur lors de l\'envoi de message : {}'.format(err))
+    else:
+        print('Message envoyé avec succès à {}, offset : {}'.format(msg.topic(), msg.offset()))
+
 try:
-    producer = KafkaProducer(bootstrap_servers=SERVER_NAME, value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-except NoBrokersAvailable as ne:
-    logging.error('No brokers available: %s', ne)
-    sys.exit(1)
+    # Récupérer les données depuis randomuser.me
+    url = "https://randomuser.me/api/"
+    response = requests.get(url)
 
-users = []
-error_count = 0
+    if response.status_code != 200:
+        print(f"Erreur HTTP : Code de statut {response.status_code}")
+    else:
+        data = response.json()
+        print(data["results"][0])
 
-while True:
-    try:
-        # Fetch data from randomuser.me
-        response = requests.get('https://randomuser.me/api/')
+        # Sérialiser en JSON
+        json_data = json.dumps(data).encode('utf-8')
 
-        # Send data if status code is good
-        if response.status_code == 200:
-            data = response.json()['results'][0]
-            producer.send(TOPIC_NAME, value=data)
-            producer.flush()
+        # Envoyer les données au sujet Kafka
+        producer.produce(TOPIC_NAME, value=json_data, callback=delivery_report)
+        producer.flush()
 
-            print(f"User n°{len(users)+1} sent successfully!")
+        print("Données envoyées avec succès à Kafka")
 
-            users.append(data)
+except requests.exceptions.RequestException as req_error:
+    print("Erreur lors de la demande vers randomuser.me:", req_error)
 
-    except NoBrokersAvailable as ne:
-        logging.error('No brokers available: %s', ne)
-        break
-
-    except Exception as e:
-        logging.error('Error: %s', e)
-        for i in range(10):
-            print(f'Waiting {i}', end='\r')
-            time.sleep(1)
-
-        if error_count > 5:
-            break
-        error_count += 1
-
-# Close the producer after sending all messages
-producer.close()
+except Exception as e:
+    print("Une erreur s'est produite:", e)
