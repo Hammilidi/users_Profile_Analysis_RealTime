@@ -34,6 +34,21 @@ pip install pyspark
  docker compose -f ./zk-single-kafka-single.yml up
 ```
 
+## Run one of the following commands to install Conduktor
+Conduktor complements your existing Kafka infrastructure.
+
+1- Launch Conduktor with a preconfigured Kafka (Redpanda):
+ 
+```
+curl -L https://releases.conduktor.io/quick-start -o docker-compose.yml && docker compose up -d --wait && echo "Conduktor started on http://localhost:8080"
+```
+2- OR Launch Conduktor and connect it to your own Kafka:
+
+```
+curl -L https://releases.conduktor.io/console -o docker-compose.yml && docker compose up -d --wait && echo "Conduktor started on http://localhost:8080"
+ ```
+
+
  ### Method 2: installing and running Kafka with ZooKeeper according to the documentation
  Download the latest Kafka release here: https://www.apache.org/dyn/closer.cgi?path=/kafka/3.6.0/kafka_2.13-3.6.0.tgz 
  and extract it:
@@ -55,21 +70,17 @@ Open another terminal session and run:
 bin/kafka-server-start.sh config/server.properties
 ```
 
-## Run one of the following commands to install Conduktor
-Conduktor complements your existing Kafka infrastructure.
-
-1- Launch Conduktor with a preconfigured Kafka (Redpanda):
- 
+# Create a topic 
+1- Move to 
 ```
-curl -L https://releases.conduktor.io/quick-start -o docker-compose.yml && docker compose up -d --wait && echo "Conduktor started on http://localhost:8080"
+cd kafka_2.13-3.6.0
 ```
-2- OR Launch Conduktor and connect it to your own Kafka:
-
+2- Run this command to create a topic
 ```
-curl -L https://releases.conduktor.io/console -o docker-compose.yml && docker compose up -d --wait && echo "Conduktor started on http://localhost:8080"
- ```
-
-
- 
- 
+bin/kafka-topics.sh --create --topic users_profiles --bootstrap-server localhost:9092
+```
+3- Run this command to show you details such as the partition count of the new topic
+```
+bin/kafka-topics.sh --describe --topic users_profiles --bootstrap-server localhost:9092
+```
 
