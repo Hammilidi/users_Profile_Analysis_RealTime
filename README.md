@@ -169,5 +169,52 @@ sbin/stop-connect-server.sh- Arrête toutes les instances du serveur Spark Conne
 sbin/stop-all.sh- Arrête à la fois le maître et les ouvriers comme décrit ci-dessus.
 ```
 
+# Les données de l'API
+Les données de l'API randomuser.me sont structurées comme suit :
+
+1. Gender : Une chaîne indiquant le sexe de l'individu.
+2. Name :
+        Titre : Une chaîne représentant le titre de la personne.
+        First Name : Une chaîne représentant le prénom de la personne.
+        Last Name : Une chaîne représentant le nom de famille de la personne.
+3. Localisation :
+        street :
+             Number : Un entier représentant le numéro de la rue.
+             Name : Une chaîne représentant le nom de la rue.
+        City : Une chaîne représentant la ville.
+        State : Une chaîne représentant l’état.
+        Country : Une chaîne représentant le pays.
+        Postcode : Une chaîne représentant le code postal.
+        Coordinates :
+             Latitude : Une chaîne représentant la latitude.
+             Longitude : Une chaîne représentant la longitude.
+        Timezone :
+             Offset : Une chaîne représentant le décalage UTC.
+             Description : Une chaîne décrivant le fuseau horaire.
+4. Email : Une chaîne représentant l'adresse e-mail.
+5. Login :
+        UUID : une chaîne représentant l'identifiant universellement unique.
+        Username : Une chaîne représentant le nom d'utilisateur.
+        Password: Une chaîne représentant le mot de passe.
+        Salt : Une chaîne utilisée dans le hachage du mot de passe.
+        MD5 : Une chaîne représentant le hachage MD5.
+        SHA1 : Une chaîne représentant le hachage SHA1.
+        SHA256 : Une chaîne représentant le hachage SHA256.
+6. Date Of Birth (DOB) :
+        Date : Une chaîne représentant la date de naissance.
+        Age : Un entier représentant l'âge.
+7. Registered :
+        Date : Une chaîne représentant la date d'inscription.
+        Age : Un entier représentant l'âge d'inscription.
+8. Phone : Une chaîne représentant le numéro de téléphone.
+9. Cell : Une chaîne représentant le numéro de téléphone portable.
+10. ID :
+        Name : Une chaîne représentant le nom de l'identifiant.
+        Value : Une chaîne représentant la valeur de l'identifiant.
+11. Picture URLs :
+        Large : Une chaîne représentant l'URL de la grande image.
+        Medium : Une chaîne représentant l'URL de l'image de taille moyenne.
+        Thumbnail : une chaîne représentant l'URL de l'image miniature.
+12. Nationality (Nat) : Une chaîne représentant la nationalité.
 
 
