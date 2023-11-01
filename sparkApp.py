@@ -9,6 +9,9 @@ from pyspark.sql.functions import sha2,concat_ws
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, ArrayType,BinaryType
 from pyspark.sql.functions import from_json,explode
+from pyspark.sql.functions import when, col, datediff, current_date
+
+
 
 findspark.init()
 
@@ -103,24 +106,39 @@ query = selected_df.writeStream \
 query.awaitTermination()
 
 
-#  Transformations
-transformed_df = selected_df.withColumn("full_name", concat_ws(" ", col("name.title"), col("name.first"), col("name.last")))
-transformed_df = transformed_df.withColumn("age", when(col("age").between(0, 120), col("age")).otherwise(0))
+# Transformation des Données
+# full name
+transformed_stream = selected_df.withColumn("full_name", concat_ws(" ", col("name.first"), col("name.last")))
+
+# full location 
+transformed_stream = transformed_stream.withColumn("location_full", concat_ws(", ",
+    col("location.street.number"), col("location.street.name"),
+    col("location.city"), col("location.state"), col("location.postcode"),
+    col("location.country")))
+
+# Valider ou recalculer l'âge
+transformed_stream = transformed_stream.withColumn("age",
+    when(col("dob.age") < 0, datediff(current_date(), col("dob.date")) / 365).otherwise(col("dob.age"))
+)
+
+# Afficher le flux de données transformées
+query = transformed_stream.writeStream \
+    .outputMode("append") \
+    .format("console") \
+    .start()
+
+# Attendre la fin de la requête (peut être stoppée manuellement)
+query.awaitTermination()
 
 
-
-
-# # # Attendre la fin du streaming
-# query.awaitTermination()
-
-# # Créez un flux Spark et définissez les opérations de sortie
-# query = kafkaStream \
-#     .writeStream \
-#     .outputMode("append") \
-#     .format("org.apache.spark.sql.cassandra") \
-#     .option("keyspace", "your_keyspace") \
-#     .option("table", "your_table") \
-#     .start()
+# Créez un flux Spark et définissez les opérations de sortie
+query = kafkaStream \
+    .writeStream \
+    .outputMode("append") \
+    .format("org.apache.spark.sql.cassandra") \
+    .option("keyspace", "your_keyspace") \
+    .option("table", "your_table") \
+    .start()
 
 # # Attendez la fin du streaming
 # query.awaitTermination()

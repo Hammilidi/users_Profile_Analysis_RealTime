@@ -1,20 +1,21 @@
 # Description
-Ce programme de formation vise à habiliter les participants à concevoir, développer et déployer un pipeline de données en temps réel en utilisant PySpark, Kafka, Cassandra et MongoDB. Les participants apprendront à transformer, agréger et stocker efficacement les données utilisateur générées par randomuser.me.
+Ce projet vise à habiliter les participants à concevoir, développer et déployer un pipeline de données en temps réel en utilisant PySpark, Kafka, Cassandra et MongoDB. Les participants apprendront à transformer, agréger et stocker efficacement les données utilisateur générées par randomuser.me.
 
 # Contexte du projet
 Dans un monde où les données sont considérées comme le nouvel or, il est impératif pour les organisations de pouvoir traiter et analyser les données en temps réel pour prendre des décisions éclairées. Ce programme est conçu pour les professionnels de la donnée qui cherchent à acquérir des compétences pratiques dans la mise en œuvre de pipelines de données en temps réel.
 En tant que developpeur Data, le professionnel en charge de cette situation est sollicité pour mettre en place un pipeline pour répondre à ces défis
 
+# Mise en place de l'environnemet de travail
 
-# Pull and Run Kafka and Zookeeper docker images
-### Method 1: pull_&_run very easily zookeeper et kafka docker images with Conduktor
+## Set up Kafka and Zookeeper 
+#### Method 1: pull_&_run very easily zookeeper et kafka docker images with Conduktor
 
-## Executer cette commande pour installer et/ou demarrer zookeeper et kafka avec un seul broker 
+Executer cette commande pour installer et/ou demarrer zookeeper et kafka avec un seul broker 
 ```
  docker compose -f ./zk-single-kafka-single.yml up
 ```
 
-## Run one of the following commands to install Conduktor
+## Run one of the following commands to install Conduktor (Kafka GUI)
 Conduktor complements your existing Kafka infrastructure.
 
 1- Launch Conduktor with a preconfigured Kafka (Redpanda):
@@ -39,84 +40,84 @@ $ cd kafka_2.13-3.6.0
 ```
 Run the following commands in order to start all services in the correct order:
 
-# Start the ZooKeeper service
+1. Start the ZooKeeper service
 ```
 bin/zookeeper-server-start.sh config/zookeeper.properties
 ```
 Open another terminal session and run:
 
-# Start the Kafka broker service
+2. Start the Kafka broker service
 ```
 bin/kafka-server-start.sh config/server.properties
 ```
 
-# Create a topic 
-1- Move to 
+3. Create a topic 
+a. Move to 
 ```
 cd kafka_2.13-3.6.0
 ```
-2- Run this command to create a topic
+b. Run this command to create a topic
 ```
 bin/kafka-topics.sh --create --topic users_profiles --bootstrap-server localhost:9092
 ```
-3- Run this command to show you details such as the partition count of the new topic
+c. Run this command to show you details such as the partition count of the new topic
 ```
 bin/kafka-topics.sh --describe --topic users_profiles --bootstrap-server localhost:9092
 ```
 
-# Set Up PySpark
+#### Set Up PySpark
 
-### Installer Python 3 et virtualenv
+1. Installer Python 3 et virtualenv
 ````
 sudo apt-get update
 sudo apt-get install python3 python3-venv
 ````
-### Créer un environnement virtuel
+2. Créer un environnement virtuel
 ````
 python3 -m venv sparkenv
 ````
 
-### Activer l'environnement virtuel
+3. Activer l'environnement virtuel
 ````
 source sparkenv/bin/activate
 ````
-### Installer PySpark dans l'environnement
+4. Installer PySpark dans l'environnement
 ````
 pip install pyspark
 ````
 
-# installer Apache Spark
+## installer Apache Spark
 
-### install required packages for spark
+1. install required packages for spark
 ```
 sudo apt install default-jdk scala git -y
 ```
 
-### verify the installed dependencies
+2. verify the installed dependencies
 ```
 java -version; javac -version; scala -version; git --version
 ```
 
-### Télécharger apache spark
+3. Télécharger apache spark
 Accédez au site Web de Apache Spark : https://spark.apache.org/downloads.html
 Choisissez la dernière version stable de Spark prebuilt for Apache Hadoop et téléchargez le fichier tgz (par exemple, spark-3.2.0-bin-hadoop3.2.tgz).
-1- Téléchargez le fichier
+a. Téléchargez le fichier
 ```
 wget https://downloads.apache.org/spark/spark-3.0.1/spark-3.0.1-bin-hadoop2.7.tgz
 Une fois le téléchargement terminé, ouvrez un terminal et accédez au répertoire où vous avez téléchargé Spark.
 
 ```
-2- Décompressez votre fichier téléchargé
+b. Décompressez votre fichier téléchargé
 ```
 tar -xzf spark-3.2.0-bin-hadoop3.2.tgz
 
 ```
-3- Déplacez spark vers un dossier approprié
+c. Déplacez spark vers un dossier approprié
 ```
 sudo mv spark-3.2.0-bin-hadoop3.2 /opt/spark
 
 ```
-4- Configuration des variables d'environnement
+d. Configuration des variables d'environnement
 Pour que Spark fonctionne correctement, vous devez configurer certaines variables d'environnement. Modifiez le fichier .bashrc en utilisant un éditeur de texte (comme nano) :
 ```
 nano ~/.bashrc
@@ -134,7 +135,7 @@ Enregistrez le fichier et fermez l'éditeur. Pour prendre en compte les modifica
 source ~/.bashrc
 
 ```
-5- Vérificqtion de l'installation
+e. Vérificqtion de l'installation
 Vérification de la version de spark
 ```
 spark-submit --version
@@ -169,7 +170,7 @@ sbin/stop-connect-server.sh- Arrête toutes les instances du serveur Spark Conne
 sbin/stop-all.sh- Arrête à la fois le maître et les ouvriers comme décrit ci-dessus.
 ```
 
-# Les données de l'API
+# Schéma des données de l'API
 Les données de l'API randomuser.me sont structurées comme suit :
 
 1. Gender : Une chaîne indiquant le sexe de l'individu.
@@ -217,4 +218,8 @@ Les données de l'API randomuser.me sont structurées comme suit :
         Thumbnail : une chaîne représentant l'URL de l'image miniature.
 12. Nationality (Nat) : Une chaîne représentant la nationalité.
 
+
+# La logique du Producer
+
+# Les transformations effectuées
 
