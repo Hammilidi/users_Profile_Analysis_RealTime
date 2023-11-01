@@ -16,24 +16,24 @@ kafkaStream = spark.readStream \
     .option("subscribe", "users_profiles") \
     .load()
  
-# # Définir un schéma pour les données entrantes
-# schema = StructType([
-#     StructField("gender", StringType(), True),
-#     StructField("name", StructType([
-#         StructField("first", StringType(), True),
-#         StructField("last", StringType(), True)
-#     ]), True),
-#     StructField("dob", StructType([
-#         StructField("date", StringType(), True),
-#         StructField("age", IntegerType(), True)
-#     ]), True),
-#     StructField("location", StructType([
-#         StructField("street", StringType(), True),
-#         StructField("city", StringType(), True),
-#         StructField("state", StringType(), True),
-#         StructField("postcode", StringType(), True)
-#     ]), True)
-# ])
+# Définir un schéma pour les données entrantes
+schema = StructType([
+    StructField("gender", StringType(), True),
+    StructField("name", StructType([
+        StructField("first", StringType(), True),
+        StructField("last", StringType(), True)
+    ]), True),
+    StructField("dob", StructType([
+        StructField("date", StringType(), True),
+        StructField("age", IntegerType(), True)
+    ]), True),
+    StructField("location", StructType([
+        StructField("street", StringType(), True),
+        StructField("city", StringType(), True),
+        StructField("state", StringType(), True),
+        StructField("postcode", StringType(), True)
+    ]), True)
+])
 
 # # Analyser les messages Kafka et appliquer le schéma
 # parsed_stream = kafkaStream.selectExpr("CAST(value AS STRING) as raw_data")
