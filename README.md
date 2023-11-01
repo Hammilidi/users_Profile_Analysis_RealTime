@@ -29,7 +29,7 @@ pip install pyspark
 # Pull and Run Kafka and Zookeeper docker images
 ### Method 1: pull_&_run very easily zookeeper et kafka docker images with Conduktor
 
- ## Executer cette commande pour installer et/ou demarrer zookeeper et kafka avec un seul broker 
+## Executer cette commande pour installer et/ou demarrer zookeeper et kafka avec un seul broker 
 ```
  docker compose -f ./zk-single-kafka-single.yml up
 ```

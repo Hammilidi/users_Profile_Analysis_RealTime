@@ -1,58 +1,67 @@
-from pyspark.sql import DataFrame
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, expr, concat_ws
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType
 
-def save_to_cassandra_table(dataframe: DataFrame, keyspace: str, table: str):
-    # Sauvegarde des données dans une table Cassandra
-    dataframe.write \
-             .format("org.apache.spark.sql.cassandra") \
-             .options(table=table, keyspace=keyspace) \
-             .mode("append") \
-             .save()
-
-def save_to_mongodb_collection(dataframe: DataFrame, collection: str):
-    # Sauvegarde des données dans une collection MongoDB
-    dataframe.write \
-             .format("mongo") \
-             .option("uri", "mongodb://localhost:27017") \
-             .option("database", "mydb") \
-             .option("collection", collection) \
-             .mode("append") \
-             .save()
-
-
-# Initialiser une session spark
-spark = SparkSession.builder \
-    .appName("Mon Application") \
-    .config("spark.jars", "file:///D://spark_dependency_jars/kafka-client.jar,file:///D://spark_dependency_jars/cassandra-driver.jar,file:///D://spark_dependency_jars/mongo-driver.jar") \
-    .config("spark.cassandra.connection.host", "localhost") \
+import findspark
+findspark.init()
+# Initialiser une session Spark
+spark = SparkSession.builder.appName("RealTimeApp") \
+    .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0") \
     .getOrCreate()
 
-# Lire depuis kafka
-raw_stream = spark.readStream \
+# Lire depuis Kafka
+kafkaStream = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "localhost:9092") \
-    .option("subscribe", "user_profiles") \
+    .option("subscribe", "users_profiles") \
     .load()
+ 
+# # Définir un schéma pour les données entrantes
+# schema = StructType([
+#     StructField("gender", StringType(), True),
+#     StructField("name", StructType([
+#         StructField("first", StringType(), True),
+#         StructField("last", StringType(), True)
+#     ]), True),
+#     StructField("dob", StructType([
+#         StructField("date", StringType(), True),
+#         StructField("age", IntegerType(), True)
+#     ]), True),
+#     StructField("location", StructType([
+#         StructField("street", StringType(), True),
+#         StructField("city", StringType(), True),
+#         StructField("state", StringType(), True),
+#         StructField("postcode", StringType(), True)
+#     ]), True)
+# ])
 
-# ... Transformations 
+# # Analyser les messages Kafka et appliquer le schéma
+# parsed_stream = kafkaStream.selectExpr("CAST(value AS STRING) as raw_data")
+# parsed_stream = parsed_stream.selectExpr("from_json(raw_data, 'your_json_schema') as json_data")
+# parsed_stream = parsed_stream.select("json_data.*")
 
+# # Effectuer des transformations
+# transformed_stream = parsed_stream.withColumn("full_name", concat_ws(" ", col("name.first"), col("name.last")))
+# transformed_stream = transformed_stream.withColumn("location", concat_ws(", ", col("location.street"), col("location.city"), col("location.state"), col("location.postcode")))
+# transformed_stream = transformed_stream.withColumnRenamed("dob.age", "age")
 
-# Ecrire dans Cassandra les donnees transformees 
-yourDataFrame.writeStream
-  .format("org.apache.spark.sql.cassandra")
-  .option("table", "your_cassandra_table")
-  .option("keyspace", "your_keyspace")
-  .start()
+# # Afficher le flux de données transformées
+# query = transformed_stream.writeStream \
+#     .outputMode("append") \
+#     .format("console") \
+#     .start()
 
-# Aggregations avec Spark
+# # Attendre la fin du streaming
+# query.awaitTermination()
 
+# # Créez un flux Spark et définissez les opérations de sortie
+# query = kafkaStream \
+#     .writeStream \
+#     .outputMode("append") \
+#     .format("org.apache.spark.sql.cassandra") \
+#     .option("keyspace", "your_keyspace") \
+#     .option("table", "your_table") \
+#     .start()
 
-
-# Stockage des donnees agreges dans MongoDB avec la bibliotheque MongoDB Spark Connector
-yourAggregatedDataFrame.writeStream
-  .format("com.mongodb.spark.sql.DefaultSource")
-  .option("uri", "mongodb://localhost:27017/yourdb.your_collection")
-  .start()
-
-
-
+# # Attendez la fin du streaming
+# query.awaitTermination()
