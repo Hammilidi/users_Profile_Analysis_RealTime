@@ -6,7 +6,7 @@ Dans un monde où les données sont considérées comme le nouvel or, il est imp
 En tant que developpeur Data, le professionnel en charge de cette situation est sollicité pour mettre en place un pipeline pour répondre à ces défis
 
 # Gestion de projet
-![gestion de proejt](media/gestionprojet.png)
+![gestion de proejt](media/kafka.PNG)
 # Mise en place de l'environnemet de travail
 
 ## Set up Kafka and Zookeeper 
