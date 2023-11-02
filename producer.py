@@ -35,7 +35,7 @@ try:
                 print(f"Erreur HTTP : Code de statut {response.status_code}")
             else:
                 data = response.json()
-                print(data)
+                # print(data)
                 print(f"Message {message_num} envoyé !")  # Affiche le numéro du message envoyé
 
                 # Sérialiser en JSON
