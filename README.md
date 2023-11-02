@@ -135,7 +135,7 @@ Enregistrez le fichier et fermez l'éditeur. Pour prendre en compte les modifica
 source ~/.bashrc
 
 ```
-e. Vérificqtion de l'installation
+e. Vérification de l'installation
 Vérification de la version de spark
 ```
 spark-submit --version
@@ -168,6 +168,22 @@ sbin/stop-worker.sh- Arrête toutes les instances de travail sur la machine sur 
 sbin/stop-workers.sh- Arrête toutes les instances de travail sur les machines spécifiées dans le conf/workersfichier.
 sbin/stop-connect-server.sh- Arrête toutes les instances du serveur Spark Connect sur la machine sur laquelle le script est exécuté.
 sbin/stop-all.sh- Arrête à la fois le maître et les ouvriers comme décrit ci-dessus.
+```
+## Install Apache Cassandra with Docker
+```
+docker pull cassandra:latest         ---pour telecharger la derniere version de l'image
+docker network create cassandra      ---pour l'acces au reseau de docker
+docker run --rm -d --name cassandra --hostname cassandra --network cassandra cassandra         ---pour demarrer cassandra
+docker exec -it cassandra cqlsh     ---pour entrer dans le shell cqlsh de cassandra
+
+```
+
+## Install mongoDB with Docker
+
+```
+docker run --name mongodb -d -p 27017:27017 mongo
+docker stop mongodb
+
 ```
 
 # Schéma des données de l'API

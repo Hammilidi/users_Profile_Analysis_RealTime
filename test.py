@@ -1,59 +1,81 @@
-from pyspark.sql import SparkSession
-from pyspark.streaming import StreamingContext
-from pyspark.streaming.kafka import KafkaUtils
-from pyspark.sql.functions import *
+#-----------------------------------------------------------CASSANDRA----------------------------------------------------
+# Connexionn avec Cassandra
+spark.conf.set("spark.cassandra.connection.host", "localhost")  # Remplacez "localhost" par l'adresse IP de votre nœud Cassandra
+spark.conf.set("spark.cassandra.connection.port", "9042")  # Le port par défaut de Cassandra est 9042
+print("connexion à cassanda établie !")
 
-# Configuration de Spark
-spark = SparkSession.builder \
-    .appName("KafkaConsumer") \
-    .config("spark.cassandra.connection.host", "localhost") \
-    .config("spark.cassandra.connection.port", "9042") \
-    .getOrCreate()
+# Define the keyspace
+keyspace = "mykeyspace"
 
-# Configuration du StreamingContext avec une durée de batch de 1 seconde
-ssc = StreamingContext(spark.sparkContext, 1)
+# Define the table name
+table = "users_profiles"
 
-# Configuration de Kafka
-kafkaParams = {
-    "bootstrap.servers": "localhost:9092",
-    "key.deserializer": "org.apache.kafka.common.serialization.StringDeserializer",
-    "value.deserializer": "org.apache.kafka.common.serialization.StringDeserializer",
-    "group.id": "users_group",
-    "auto.offset.reset": "latest"
-}
-topics = ["users_profiles"]
+# Definir la fonction save_to_cassandra_table
+def save_to_cassandra_table(dataframe=result_df, keyspace="mykespace", table="users_profiles"):
+    dataframe.write \
+        .format("org.apache.spark.sql.cassandra") \
+        .options(keyspace=keyspace, table=table) \
+        .mode("append") \
+        .save()
+        
+# Utilisation de la fonction pour insérer les valeurs
+save_to_cassandra_table(result_df, keyspace, table)
 
-# Création du flux de Kafka
-kafkaStream = KafkaUtils.createDirectStream(ssc, topics, kafkaParams)
 
-# Traitement des données du flux
-lines = kafkaStream \
-    .map(lambda x: x[1]) \
-    .map(lambda x: json.loads(x)) \
-    .map(lambda x: x["results"][0])
+# Create the keyspace if it doesn't exist
+spark.sql(f"CREATE KEYSPACE IF NOT EXISTS {keyspace} WITH REPLICATION = {{'class': 'SimpleStrategy', 'replication_factor': 1}}")
 
-# Transformation des données
-transformed_data = lines \
-    .select(
-        col("name.title").alias("title"),
-        col("name.first").alias("first_name"),
-        col("name.last").alias("last_name"),
-        col("location.city").alias("city"),
-        col("location.state").alias("state"),
-        col("location.country").alias("country"),
-        col("email"),
-        col("phone"),
-        col("nat")
+# Créez la table Cassandra
+spark.sql(f"""
+    CREATE TABLE IF NOT EXISTS {keyspace}.{table} (
+        full_name STRING, 
+        full_address STRING, 
+        age INT,
+        hashed_password STRING,
+        hashed_dob_date STRING,
+        hashed_phone STRING,
+        hashed_cell STRING,
+        PRIMARY KEY (full_name)
     )
+""")
 
-# Écriture des données dans Cassandra
-transformed_data.write \
-    .format("org.apache.spark.sql.cassandra") \
-    .options(table="user_profiles", keyspace="your_keyspace") \
-    .mode("append") \
-    .save()
+# Sélectionner uniquement les colonnes à insérer
+columns_for_cassandra = ["full_name", "age", "full_address", "hashed_password", "hashed_dob_date", "hashed_phone", "hashed_cell"]
+selected_columns_df = selected_df.select(columns_for_cassandra)
 
-# Démarrage du StreamingContext
-ssc.start()
-ssc.awaitTermination()
+save_to_cassandra_table()
+
+
+
+
+
+# ---------------------------------------------------------MongoDB----------------------------------------------------------
+import pymongo
+
+# Définissez votre URI de connexion MongoDB
+mongo_uri = "mongodb://localhost:27017/"
+
+# Créez une connexion MongoDB
+client = pymongo.MongoClient(mongo_uri)
+
+# Sélectionnez votre base de données et votre collection
+db = client["mydb"]
+collection = db["mycollection"]
+
+# Définissez une fonction pour insérer des données dans MongoDB
+def insert_into_mongodb(iterator):
+    for record in iterator:
+        data_to_mongo = {
+            "gender": record.gender,
+            "full_name": record.full_name,
+            "age": record.age,
+            "email": record.email,
+            "nat": record.nat
+        }
+        collection.insert_one(data_to_mongo)
+
+# Utilisez la méthode foreach pour insérer les données dans MongoDB
+selected_df.writeStream \
+    .foreach(insert_into_mongodb) \
+    .start()
 

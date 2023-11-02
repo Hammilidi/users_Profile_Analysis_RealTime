@@ -10,7 +10,7 @@ TOPIC_NAME = 'users_profiles'
 # Définir le nombre de messages à envoyer à chaque itération
 NUM_MESSAGES_PER_ITERATION = 30
 # Définir l'intervalle de pause en secondes entre les itérations
-PAUSE_INTERVAL_SECONDS = 1  # 1 seconde de pause entre les itérations
+PAUSE_INTERVAL_SECONDS = 30  # 1 seconde de pause entre les itérations
 
 # Configuration du producteur Kafka
 config = {'bootstrap.servers': SERVER_NAME}
@@ -35,6 +35,7 @@ try:
                 print(f"Erreur HTTP : Code de statut {response.status_code}")
             else:
                 data = response.json()
+                print(data)
                 print(f"Message {message_num} envoyé !")  # Affiche le numéro du message envoyé
 
                 # Sérialiser en JSON
