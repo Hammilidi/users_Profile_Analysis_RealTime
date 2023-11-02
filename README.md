@@ -5,6 +5,8 @@ Ce projet vise à habiliter les participants à concevoir, développer et déplo
 Dans un monde où les données sont considérées comme le nouvel or, il est impératif pour les organisations de pouvoir traiter et analyser les données en temps réel pour prendre des décisions éclairées. Ce programme est conçu pour les professionnels de la donnée qui cherchent à acquérir des compétences pratiques dans la mise en œuvre de pipelines de données en temps réel.
 En tant que developpeur Data, le professionnel en charge de cette situation est sollicité pour mettre en place un pipeline pour répondre à ces défis
 
+# Gestion de projet
+![gestion de proejt](media/gestionprojet.png)
 # Mise en place de l'environnemet de travail
 
 ## Set up Kafka and Zookeeper 
@@ -275,7 +277,29 @@ Exécution
 
 Pour exécuter le code, assurez-vous d'avoir installé les dépendances et exécutez le script Python. Il générera et enverra des messages JSON aléatoires à votre serveur Kafka spécifié.
 
-N'oubliez pas d'adapter les paramètres de configuration en fonction de votre environnement Kafka et de vos besoins.
+
 
 # Les transformations effectuées
+Les transformations effectuées dans le code ont pour but de préparer et de nettoyer les données en streaming reçues à partir de Kafka. Voici une explication des transformations appliquées :
 
+1. Sélection des Colonnes : À partir du DataFrame `df`, certaines colonnes sont sélectionnées pour être renommées ou transformées en de nouvelles colonnes.
+
+2. Renommage des Colonnes : Plusieurs colonnes sont renommées pour des noms plus compréhensibles ou pour correspondre à des concepts métier. Par exemple, "data.login.uuid" est renommé en "identifiant".
+
+3. Concaténation du Nom Complet : Les colonnes "data.name.last" et "data.name.first" sont concaténées pour former la colonne "full_name". Ceci est couramment fait pour des raisons de lisibilité.
+
+4. Extraction du Nom de Domaine : La colonne "data.email" est divisée en deux parties en utilisant le caractère "@" comme séparateur, et seule la deuxième partie (le nom de domaine de l'e-mail) est extraite. Cela peut être utile pour l'analyse des données basée sur les domaines de messagerie.
+
+5. Hachage des Données Sensibles : Les colonnes "email", "phone" et "full_address" sont hachées à l'aide de l'algorithme SHA-256. Cette opération est courante pour sécuriser des informations sensibles dans le contexte du traitement des données personnelles.
+
+6. Calcul de l'Âge : L'âge est calculé à partir de la date de naissance (colonne "data.dob.date"). La date actuelle est soustraite de la date de naissance, et le résultat est divisé par 365 pour obtenir l'âge en années. La colonne "age" est ensuite arrondie.
+
+7. Filtrage par Âge : Une opération de filtrage est appliquée pour ne conserver que les enregistrements où l'âge est supérieur à 13. Cela peut être nécessaire pour exclure les données qui ne correspondent pas aux critères d'âge souhaités.
+
+Ces transformations visent à nettoyer et à structurer les données en streaming de manière à ce qu'elles soient prêtes pour l'analyse, le stockage ou la visualisation ultérieure. Les opérations de hachage et de filtrage peuvent être particulièrement importantes pour la sécurité des données et pour s'assurer que seules les données pertinentes sont prises en compte dans le traitement subséquent.
+
+# Insertions
+Insertions des donnees transformees dans cassandra
+Insertion des donnees d'analyse sur mongoDB
+
+#
