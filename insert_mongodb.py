@@ -12,22 +12,15 @@ def save_to_mongodb(iter):
         db_name = "users_profiles"
         collection_name = "user_data"
 
-        if db_name not in client.list_database_names():
-            db = client[db_name]
-        else:
-            db = client[db_name]
-
-        if collection_name not in db.list_collection_names():
-            collection = db.create_collection(collection_name)
-        else:
-            collection = db[collection_name]
+        db = client[db_name]
+        collection = db[collection_name]
 
         data = {
             "identifiant": iter.identifiant,
             "full_name": iter.full_name,
             "domain_name": iter.domain_name,
             "gender": iter.gender,
-            "Country": iter.Country,
+            "country": iter.country,
             "age": iter.age,
             "username": iter.username,
             "inscription": iter.inscription
@@ -51,13 +44,6 @@ spark = SparkSession \
     .config("spark.sql.shuffle.partitions", 4) \
     .master("local[*]") \
     .getOrCreate()
-
-streaming_df = spark.readStream \
-    .format("kafka") \
-    .option("kafka.bootstrap.servers", "localhost:9092") \
-    .option("subscribe", "user") \
-    .option("startingOffsets", "earliest") \
-    .load()
 
 # Définir un schéma pour les données entrantes
 
@@ -133,7 +119,9 @@ kafkaStream = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "localhost:9092") \
     .option("subscribe", "users_profiles") \
+    .option("startingOffsets", "earliest") \
     .load()
+
  
 # Analyser les messages Kafka et appliquer le schéma
 parsed_stream = kafkaStream.selectExpr("CAST(value AS STRING)")
@@ -160,3 +148,5 @@ result_df.writeStream \
     .outputMode("append") \
     .start() \
     .awaitTermination()
+
+

@@ -108,30 +108,30 @@ df = parsed_stream.withColumn("values", from_json(parsed_stream["value"], schema
 # ----------------------------------------------------------TRANSFORMATIONS------------------------------------------
 
 result_df = df.select(
-F.col("data.login.uuid").alias("identifiant"),
-F.col("data.gender").alias("gender"),
-F.col("data.name.title").alias("title"),
+    F.col("data.name.title").alias("title"),
+    F.col("data.login.uuid").alias("identifiant"),
+    F.col("data.gender").alias("gender"),
 
-F.concat_ws(" ",
-F.col("data.name.last"),
-F.col("data.name.first")).alias("full_name"),
+    F.concat_ws(" ",
+    F.col("data.name.last"),
+    F.col("data.name.first")).alias("full_name"),
 
-F.col("data.login.username").alias("username"),
+    F.col("data.login.username").alias("username"),
 
-F.col("data.email").alias("email"),
+    F.col("data.email").alias("email"),
 
-F.split(F.col("data.email"), "@").getItem(1).alias("domain_name"),
+    F.split(F.col("data.email"), "@").getItem(1).alias("domain_name"),
 
-F.col("data.phone").alias("phone"),
+    F.col("data.phone").alias("phone"),
 
-F.concat_ws(", ",
-F.col("data.location.city"),
-F.col("data.location.state"),
-F.col("data.location.country")).alias("full_address"),
+    F.concat_ws(", ",
+    F.col("data.location.city"),
+    F.col("data.location.state"),
+    F.col("data.location.country")).alias("full_address"),
 
-F.round(F.datediff(F.current_date(), F.to_date(F.col("data.dob.date")))/365).alias("age"),
-F.col("data.registered.date").alias("inscription"),
-F.col("data.nat").alias("nationality")
+    F.round(F.datediff(F.current_date(), F.to_date(F.col("data.dob.date")))/365).alias("age"),
+    F.col("data.registered.date").alias("inscription"),
+    F.col("data.nat").alias("nationality")
 )
 # encrypt email,passowrd,phone,cell using SHA-256
 result_df = result_df.withColumn("email", F.sha2(result_df["email"], 256))
@@ -142,11 +142,11 @@ result_df = result_df.withColumn("full_address", F.sha2(result_df["full_address"
 result_df = result_df.filter(col("age") > 13)
 
 
-#-----------------------------------------------------------CASSANDRA----------------------------------------------------
-# Connexionn avec Cassandra
+# -----------------------------------------------------------CASSANDRA----------------------------------------------------
+# Connexion avec Cassandra
 spark.conf.set("spark.cassandra.connection.host", "localhost")  # Remplacez "localhost" par l'adresse IP de votre nœud Cassandra
 spark.conf.set("spark.cassandra.connection.port", "9042")  # Le port par défaut de Cassandra est 9042
-print("connexion à cassanda établie !")
+print("Connexion à Cassandra établie !")
 
 # Define the keyspace
 keyspace = "mykeyspace"
@@ -154,57 +154,21 @@ keyspace = "mykeyspace"
 # Define the table name
 table = "users_profiles"
 
-
-# Definir la fonction save_to_cassandra_table
-def save_to_cassandra_table(dataframe=result_df, keyspace="mykespace", table="users_profiles"):
-    dataframe.write \
+# Définir la fonction save_to_cassandra_table
+def save_to_cassandra_table(iter):
+    iter.writeStream \
         .format("org.apache.spark.sql.cassandra") \
-        .options(keyspace=keyspace, table=table) \
+        .option("checkpointLocation", "./checkpoint") \
+        .option("keyspace", keyspace) \
+        .option("table", table) \
         .mode("append") \
         .save()
-        
-# Utilisation de la fonction pour insérer les valeurs
-save_to_cassandra_table(result_df, keyspace, table)
 
-
-# Create the keyspace if it doesn't exist
-spark.sql(f"CREATE KEYSPACE IF NOT EXISTS {keyspace} WITH REPLICATION = {{'class': 'SimpleStrategy', 'replication_factor': 1}}")
-
-# Créez la table Cassandra
-spark.sql(f"""
-    CREATE TABLE IF NOT EXISTS {keyspace}.{table} (
-        full_name STRING, 
-        full_address STRING, 
-        age INT,
-        hashed_password STRING,
-        hashed_dob_date STRING,
-        hashed_phone STRING,
-        hashed_cell STRING,
-        PRIMARY KEY (full_name)
-    )
-""")
-
-# Sélectionner uniquement les colonnes à insérer
-columns_for_cassandra = ["full_name", "age", "full_address", "hashed_password", "hashed_dob_date", "hashed_phone", "hashed_cell"]
-selected_columns_df = result_df.select(columns_for_cassandra)
-
-save_to_cassandra_table()
-
-
-
-
-
-
-#------------------------------------------------------------------------------------------------------------
-
-# Afficher le flux de données en streaming
-
-query = result_df.writeStream \
+# -----------------------------------------------------------STREAMING----------------------------------------------------
+result_df.writeStream \
+    .foreach(save_to_cassandra_table) \
     .outputMode("append") \
-    .format("console") \
-    .start()
-
-# Attendez la fin du streaming
-query.awaitTermination()
-
-
+    .start() \
+    .awaitTermination()
+    
+    

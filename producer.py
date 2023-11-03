@@ -55,3 +55,5 @@ except requests.exceptions.RequestException as req_error:
 
 except Exception as e:
     print("Une erreur s'est produite:", e)
+
+
