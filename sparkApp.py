@@ -20,7 +20,8 @@ findspark.init()
 
 # Initialiser une session Spark
 spark = SparkSession.builder.appName("RealTimeApp") \
-    .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0") \
+    .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0", 
+            "com.datastax.spark:spark-cassandra-connector_2.12:3.2.0") \
     .getOrCreate()
 
 # Lire depuis Kafka
@@ -144,31 +145,35 @@ result_df = result_df.filter(col("age") > 13)
 
 # -----------------------------------------------------------CASSANDRA----------------------------------------------------
 # Connexion avec Cassandra
-spark.conf.set("spark.cassandra.connection.host", "localhost")  # Remplacez "localhost" par l'adresse IP de votre nœud Cassandra
-spark.conf.set("spark.cassandra.connection.port", "9042")  # Le port par défaut de Cassandra est 9042
+spark.conf.set("spark.cassandra.connection.host", "localhost")
+spark.conf.set("spark.cassandra.connection.port", "9042")
 print("Connexion à Cassandra établie !")
 
 # Define the keyspace
-keyspace = "mykeyspace"
-
-# Define the table name
+keyspace = "usersprofilespace"
 table = "users_profiles"
 
-# Définir la fonction save_to_cassandra_table
+# Define la fonction save_to_cassandra_table
 def save_to_cassandra_table(iter):
-    iter.writeStream \
-        .format("org.apache.spark.sql.cassandra") \
-        .option("checkpointLocation", "./checkpoint") \
-        .option("keyspace", keyspace) \
-        .option("table", table) \
-        .mode("append") \
-        .save()
+    if not iter.isEmpty():
+        iter.write \
+            .format("org.apache.spark.sql.cassandra") \
+            .option("checkpointLocation", "./checkpoint") \
+            .option("keyspace", keyspace) \
+            .option("table", table) \
+            .mode("append") \
+            .save()
 
-# -----------------------------------------------------------STREAMING----------------------------------------------------
-result_df.writeStream \
+# Écrivez les données du flux Spark Streaming dans Cassandra en utilisant la fonction save_to_cassandra_table
+cassandra_query = result_df.writeStream \
     .foreach(save_to_cassandra_table) \
     .outputMode("append") \
-    .start() \
-    .awaitTermination()
-    
-    
+    .start()
+
+# Attendez la fin du streaming
+cassandra_query.awaitTermination()
+
+
+
+
+

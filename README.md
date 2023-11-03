@@ -299,6 +299,30 @@ Les transformations effectuées dans le code ont pour but de préparer et de net
 Ces transformations visent à nettoyer et à structurer les données en streaming de manière à ce qu'elles soient prêtes pour l'analyse, le stockage ou la visualisation ultérieure. Les opérations de hachage et de filtrage peuvent être particulièrement importantes pour la sécurité des données et pour s'assurer que seules les données pertinentes sont prises en compte dans le traitement subséquent.
 
 # Insertions
+
+script de creqtion du keyspace et de la table cassandra
+```
+CREATE KEYSPACE IF NOT EXISTS usersprofilespace WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+USE usersprofilespace;
+
+CREATE TABLE IF NOT EXISTS users_profiles (
+    title TEXT,
+    identifiant UUID,
+    gender TEXT,
+    full_name TEXT,
+    username TEXT,
+    email TEXT,
+    domain_name TEXT,
+    phone TEXT,
+    full_address TEXT,
+    age INT,
+    inscription TEXT,
+    nationality TEXT,
+    PRIMARY KEY (identifiant)
+);
+
+```
+
 Insertions des donnees transformees dans cassandra
 Insertion des donnees d'analyse sur mongoDB
 
