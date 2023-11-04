@@ -1,12 +1,12 @@
 # Description
-Ce projet vise à habiliter les participants à concevoir, développer et déployer un pipeline de données en temps réel en utilisant PySpark, Kafka, Cassandra et MongoDB. Les participants apprendront à transformer, agréger et stocker efficacement les données utilisateur générées par randomuser.me.
+Ce projet vise à concevoir, développer et déployer un pipeline de données en temps réel en utilisant PySpark, Kafka, Cassandra et MongoDB. Les participants apprendront à transformer, agréger et stocker efficacement les données utilisateur générées par randomuser.me.
 
 # Contexte du projet
 Dans un monde où les données sont considérées comme le nouvel or, il est impératif pour les organisations de pouvoir traiter et analyser les données en temps réel pour prendre des décisions éclairées. Ce programme est conçu pour les professionnels de la donnée qui cherchent à acquérir des compétences pratiques dans la mise en œuvre de pipelines de données en temps réel.
 En tant que developpeur Data, le professionnel en charge de cette situation est sollicité pour mettre en place un pipeline pour répondre à ces défis
 
 # Gestion de projet
-![gestion de proejt](media/kafka.PNG)
+![gestion de projet](media/kafka.png)
 # Mise en place de l'environnemet de travail
 
 ## Set up Kafka and Zookeeper 
@@ -173,11 +173,11 @@ sbin/stop-all.sh- Arrête à la fois le maître et les ouvriers comme décrit ci
 ```
 ## Install Apache Cassandra with Docker
 ```
-docker pull cassandra:latest         ---pour telecharger la derniere version de l'image
-docker network create cassandra      ---pour l'acces au reseau de docker
-docker run --rm -d --name cassandra --hostname cassandra --network cassandra cassandra         ---pour demarrer cassandra
+docker run --rm -d --name cassandra --hostname cassandra --network cassandra -e CASSANDRA_CLUSTER_NAME=MonCluster -p 9042:9042 cassandra:latest 
+                                                               
 docker exec -it cassandra cqlsh     ---pour entrer dans le shell cqlsh de cassandra
-
+SELECT * FROM user_profiles_data;   ---afficher le contenu de la table user_profiles_data
+DROP TABLE  user_profiles_data;     ---Supprimer la table
 ```
 
 ## Install mongoDB with Docker

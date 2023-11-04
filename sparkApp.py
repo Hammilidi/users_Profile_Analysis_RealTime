@@ -141,36 +141,6 @@ result_df = result_df.filter(col("age") > 13)
 
 
 # -----------------------------------------------------------CASSANDRA----------------------------------------------------
-# # Connexion avec Cassandra
-# spark.conf.set("spark.cassandra.connection.host", "localhost")
-# spark.conf.set("spark.cassandra.connection.port", "9042")
-# print("Connexion à Cassandra établie !")
-
-# # Define the keyspace
-# keyspace = "usersprofilespace"
-# table = "users_profiles"
-
-# # Define la fonction save_to_cassandra_table
-# def save_to_cassandra_table(iter):
-#     iter.write \
-#         .format("org.apache.spark.sql.cassandra") \
-#         .option("checkpointLocation", "./checkpoint") \
-#         .option("keyspace", keyspace) \
-#         .option("table", table) \
-#         .mode("append") \
-#         .save()
-
-# # Écrivez les données du flux Spark Streaming dans Cassandra en utilisant la fonction save_to_cassandra_table
-# cassandra_query = result_df.writeStream \
-#     .foreach(save_to_cassandra_table) \
-#     .outputMode("append") \
-#     .start()
-
-# # Attendez la fin du streaming
-# cassandra_query.awaitTermination()
-
-
-
 from cassandra.cluster import Cluster
 
 cassandra_host = 'localhost'
