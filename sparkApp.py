@@ -20,9 +20,9 @@ findspark.init()
 
 # Initialiser une session Spark
 spark = SparkSession.builder.appName("RealTimeApp") \
-    .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0", 
-            "com.datastax.spark:spark-cassandra-connector_2.12:3.2.0") \
+    .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,com.datastax.spark:spark-cassandra-connector_2.12:3.2.0") \
     .getOrCreate()
+
 
 # Lire depuis Kafka
 kafkaStream = spark.readStream \
@@ -112,28 +112,25 @@ result_df = df.select(
     F.col("data.name.title").alias("title"),
     F.col("data.login.uuid").alias("identifiant"),
     F.col("data.gender").alias("gender"),
-
+    F.col("data.dob.date").alias("birthday"),
+    F.col("data.location.city").alias("city"),
+    F.col("data.location.country").alias("country"),
+    F.col("data.location.state").alias("state"),
     F.concat_ws(" ",
     F.col("data.name.last"),
     F.col("data.name.first")).alias("full_name"),
-
     F.col("data.login.username").alias("username"),
-
     F.col("data.email").alias("email"),
-
-    F.split(F.col("data.email"), "@").getItem(1).alias("domain_name"),
-
     F.col("data.phone").alias("phone"),
-
     F.concat_ws(", ",
     F.col("data.location.city"),
     F.col("data.location.state"),
     F.col("data.location.country")).alias("full_address"),
-
     F.round(F.datediff(F.current_date(), F.to_date(F.col("data.dob.date")))/365).alias("age"),
     F.col("data.registered.date").alias("inscription"),
     F.col("data.nat").alias("nationality")
 )
+
 # encrypt email,passowrd,phone,cell using SHA-256
 result_df = result_df.withColumn("email", F.sha2(result_df["email"], 256))
 result_df = result_df.withColumn("phone", F.sha2(result_df["phone"], 256))
@@ -144,36 +141,115 @@ result_df = result_df.filter(col("age") > 13)
 
 
 # -----------------------------------------------------------CASSANDRA----------------------------------------------------
-# Connexion avec Cassandra
-spark.conf.set("spark.cassandra.connection.host", "localhost")
-spark.conf.set("spark.cassandra.connection.port", "9042")
-print("Connexion à Cassandra établie !")
+# # Connexion avec Cassandra
+# spark.conf.set("spark.cassandra.connection.host", "localhost")
+# spark.conf.set("spark.cassandra.connection.port", "9042")
+# print("Connexion à Cassandra établie !")
 
-# Define the keyspace
-keyspace = "usersprofilespace"
-table = "users_profiles"
+# # Define the keyspace
+# keyspace = "usersprofilespace"
+# table = "users_profiles"
 
-# Define la fonction save_to_cassandra_table
-def save_to_cassandra_table(iter):
-    if not iter.isEmpty():
-        iter.write \
-            .format("org.apache.spark.sql.cassandra") \
-            .option("checkpointLocation", "./checkpoint") \
-            .option("keyspace", keyspace) \
-            .option("table", table) \
-            .mode("append") \
-            .save()
+# # Define la fonction save_to_cassandra_table
+# def save_to_cassandra_table(iter):
+#     iter.write \
+#         .format("org.apache.spark.sql.cassandra") \
+#         .option("checkpointLocation", "./checkpoint") \
+#         .option("keyspace", keyspace) \
+#         .option("table", table) \
+#         .mode("append") \
+#         .save()
 
-# Écrivez les données du flux Spark Streaming dans Cassandra en utilisant la fonction save_to_cassandra_table
-cassandra_query = result_df.writeStream \
-    .foreach(save_to_cassandra_table) \
-    .outputMode("append") \
-    .start()
+# # Écrivez les données du flux Spark Streaming dans Cassandra en utilisant la fonction save_to_cassandra_table
+# cassandra_query = result_df.writeStream \
+#     .foreach(save_to_cassandra_table) \
+#     .outputMode("append") \
+#     .start()
 
-# Attendez la fin du streaming
+# # Attendez la fin du streaming
+# cassandra_query.awaitTermination()
+
+
+
+from cassandra.cluster import Cluster
+
+cassandra_host = 'localhost'
+cassandra_port = 9042
+keyspaceName = 'user_profiles'
+tableName = 'user_profiles_data'
+
+def connect_to_cassandra(host, port):
+    try:
+        # Provide contact points
+        cluster = Cluster([host], port=port)
+        session = cluster.connect()
+        print("Connection established successfully.")
+        return session
+    except Exception as e:
+        print("Connection failed: ", str(e))
+        return None
+
+def create_cassandra_keyspace(session, keyspaceName):
+    try:
+        create_keyspace_query = f"""
+            CREATE KEYSPACE IF NOT EXISTS {keyspaceName}
+            WITH REPLICATION = {{'class': 'SimpleStrategy', 'replication_factor': 1}}
+        """
+        session.execute(create_keyspace_query)
+        print(f"Keyspace {keyspaceName} was created successfully.")
+    except Exception as e:
+        print(f"Error in creating keyspace {keyspaceName}: {str(e)}")
+
+def create_cassandra_table(session, tableName):
+    try:
+        create_table_query = f"""
+            CREATE TABLE IF NOT EXISTS {tableName} (
+                identifiant UUID PRIMARY KEY,
+                gender TEXT,
+                title TEXT,
+                full_name TEXT,
+                username TEXT,
+                full_address TEXT,
+                email TEXT,
+                phone TEXT,
+                city TEXT,
+                state TEXT,
+                nationality TEXT,
+                country TEXT,
+                birthday TEXT,
+                age INT,
+                inscription TEXT
+            )
+        """
+        session.execute(create_table_query)
+        print(f"Table {tableName} was created successfully.")
+    except Exception as e:
+        print(f"Error in creating table {tableName}: {str(e)}")
+
+# Establish Cassandra connection
+session = connect_to_cassandra(cassandra_host, cassandra_port)
+
+if session:
+    create_cassandra_keyspace(session, keyspaceName)
+
+    # Set the keyspace
+    session.set_keyspace(keyspaceName)
+
+    create_cassandra_table(session, tableName)
+
+    # Save the DataFrame to Cassandra
+    result_df_clean = result_df.filter(col("identifiant").isNotNull())
+
+    result_df_clean.writeStream \
+        .outputMode("append") \
+        .format("org.apache.spark.sql.cassandra") \
+        .option("checkpointLocation", "./checkpoint/data") \
+        .option("keyspace", keyspaceName) \
+        .option("table", tableName) \
+        .start()
+else:
+    print("Exiting due to Cassandra connection failure.")
+
+# Continue with your Spark Streaming code
+cassandra_query = result_df.writeStream.outputMode("append").format("console").start()
 cassandra_query.awaitTermination()
-
-
-
-
-
